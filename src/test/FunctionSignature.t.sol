@@ -5,6 +5,7 @@ import "forge-std/console2.sol";
 import {Setup, ERC20, IStrategyInterface} from "./utils/Setup.sol";
 
 contract FunctionSignatureTest is Setup {
+
     function setUp() public virtual override {
         super.setUp();
     }
@@ -15,13 +16,7 @@ contract FunctionSignatureTest is Setup {
     function test_functionCollisions() public {
         uint256 wad = 1e18;
         vm.expectRevert("initialized");
-        strategy.initialize(
-            address(asset),
-            "name",
-            management,
-            performanceFeeRecipient,
-            keeper
-        );
+        strategy.initialize(address(asset), "name", management, performanceFeeRecipient, keeper);
 
         // Check view functions
         assertEq(strategy.convertToAssets(wad), wad, "convert to assets");
@@ -35,17 +30,13 @@ contract FunctionSignatureTest is Setup {
         assertEq(strategy.unlockedShares(), 0, "unlocked shares");
         assertEq(strategy.asset(), address(asset), "asset");
         assertEq(strategy.apiVersion(), "3.0.4", "api");
-        assertEq(strategy.MAX_FEE(), 5_000, "max fee");
+        assertEq(strategy.MAX_FEE(), 5000, "max fee");
         assertEq(strategy.fullProfitUnlockDate(), 0, "unlock date");
         assertEq(strategy.profitUnlockingRate(), 0, "unlock rate");
         assertGt(strategy.lastReport(), 0, "last report");
         assertEq(strategy.pricePerShare(), 10 ** asset.decimals(), "pps");
         assertTrue(!strategy.isShutdown());
-        assertEq(
-            strategy.symbol(),
-            string(abi.encodePacked("ys", asset.symbol())),
-            "symbol"
-        );
+        assertEq(strategy.symbol(), string(abi.encodePacked("ys", asset.symbol())), "symbol");
         assertEq(strategy.decimals(), asset.decimals(), "decimals");
 
         // Assure modifiers are working
@@ -59,7 +50,7 @@ contract FunctionSignatureTest is Setup {
         vm.expectRevert("!management");
         strategy.setEmergencyAdmin(user);
         vm.expectRevert("!management");
-        strategy.setPerformanceFee(uint16(2_000));
+        strategy.setPerformanceFee(uint16(2000));
         vm.expectRevert("!management");
         strategy.setPerformanceFeeRecipient(user);
         vm.expectRevert("!management");
@@ -90,4 +81,5 @@ contract FunctionSignatureTest is Setup {
         assertEq(strategy.balanceOf(user), wad, "second balance");
         assertEq(strategy.balanceOf(keeper), 0, "keeper balance");
     }
+
 }

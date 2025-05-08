@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.18;
 
+import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
+
 import "forge-std/console2.sol";
 import {ExtendedTest} from "./ExtendedTest.sol";
 
-import {Strategy, ERC20} from "../../Strategy.sol";
+import {ArcadiaLenderStrategy as Strategy, ERC20} from "../../Strategy.sol";
 import {StrategyFactory} from "../../StrategyFactory.sol";
 import {IStrategyInterface} from "../../interfaces/IStrategyInterface.sol";
 
@@ -12,14 +14,24 @@ import {IStrategyInterface} from "../../interfaces/IStrategyInterface.sol";
 import {IEvents} from "@tokenized-strategy/interfaces/IEvents.sol";
 
 interface IFactory {
+
     function governance() external view returns (address);
 
-    function set_protocol_fee_bps(uint16) external;
+    function set_protocol_fee_bps(
+        uint16
+    ) external;
 
-    function set_protocol_fee_recipient(address) external;
+    function set_protocol_fee_recipient(
+        address
+    ) external;
+
 }
 
 contract Setup is ExtendedTest, IEvents {
+
+    // Addresses for different contracts we will use repeatedly.
+    IERC4626 public vault = IERC4626(0x393893caeB06B5C16728bb1E354b6c36942b1382); // arcadia weth lender vault
+
     // Contract instances that we will use repeatedly.
     ERC20 public asset;
     IStrategyInterface public strategy;
@@ -53,17 +65,12 @@ contract Setup is ExtendedTest, IEvents {
         _setTokenAddrs();
 
         // Set asset
-        asset = ERC20(tokenAddrs["DAI"]);
+        asset = ERC20(vault.asset());
 
         // Set decimals
         decimals = asset.decimals();
 
-        strategyFactory = new StrategyFactory(
-            management,
-            performanceFeeRecipient,
-            keeper,
-            emergencyAdmin
-        );
+        strategyFactory = new StrategyFactory(management, performanceFeeRecipient, keeper, emergencyAdmin);
 
         // Deploy strategy and set variables
         strategy = IStrategyInterface(setUpStrategy());
@@ -81,14 +88,8 @@ contract Setup is ExtendedTest, IEvents {
 
     function setUpStrategy() public returns (address) {
         // we save the strategy as a IStrategyInterface to give it the needed interface
-        IStrategyInterface _strategy = IStrategyInterface(
-            address(
-                strategyFactory.newStrategy(
-                    address(asset),
-                    "Tokenized Strategy"
-                )
-            )
-        );
+        IStrategyInterface _strategy =
+            IStrategyInterface(address(strategyFactory.newStrategy(address(vault), "Tokenized Strategy")));
 
         vm.prank(management);
         _strategy.acceptManagement();
@@ -96,11 +97,7 @@ contract Setup is ExtendedTest, IEvents {
         return address(_strategy);
     }
 
-    function depositIntoStrategy(
-        IStrategyInterface _strategy,
-        address _user,
-        uint256 _amount
-    ) public {
+    function depositIntoStrategy(IStrategyInterface _strategy, address _user, uint256 _amount) public {
         vm.prank(_user);
         asset.approve(address(_strategy), _amount);
 
@@ -108,11 +105,7 @@ contract Setup is ExtendedTest, IEvents {
         _strategy.deposit(_amount, _user);
     }
 
-    function mintAndDepositIntoStrategy(
-        IStrategyInterface _strategy,
-        address _user,
-        uint256 _amount
-    ) public {
+    function mintAndDepositIntoStrategy(IStrategyInterface _strategy, address _user, uint256 _amount) public {
         airdrop(asset, _user, _amount);
         depositIntoStrategy(_strategy, _user, _amount);
     }
@@ -125,9 +118,7 @@ contract Setup is ExtendedTest, IEvents {
         uint256 _totalIdle
     ) public {
         uint256 _assets = _strategy.totalAssets();
-        uint256 _balance = ERC20(_strategy.asset()).balanceOf(
-            address(_strategy)
-        );
+        uint256 _balance = ERC20(_strategy.asset()).balanceOf(address(_strategy));
         uint256 _idle = _balance > _assets ? _assets : _balance;
         uint256 _debt = _assets - _idle;
         assertEq(_assets, _totalAssets, "!totalAssets");
@@ -164,4 +155,5 @@ contract Setup is ExtendedTest, IEvents {
         tokenAddrs["DAI"] = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
         tokenAddrs["USDC"] = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
     }
+
 }
