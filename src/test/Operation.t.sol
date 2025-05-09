@@ -17,15 +17,19 @@ contract OperationTest is Setup {
         assertEq(strategy.management(), management);
         assertEq(strategy.performanceFeeRecipient(), performanceFeeRecipient);
         assertEq(strategy.keeper(), keeper);
-        // TODO: add additional check on strat params
+        assertEq(strategy.vault(), address(vault));
+        assertEq(strategy.balanceOfAsset(), 0);
+        assertEq(strategy.balanceOfVault(), 0);
+        assertEq(strategy.balanceOfStake(), 0);
+        assertEq(strategy.valueOfVault(), 0);
+        assertEq(strategy.vaultsMaxWithdraw(), 0);
+        assertEq(strategy.auction(), address(0));
     }
 
-    function test_operation()
-        // uint256 _amount
-        public
-    {
-        // vm.assume(_amount > minFuzzAmount && _amount < maxFuzzAmount);
-        uint256 _amount = 10 ether;
+    function test_operation(
+        uint256 _amount
+    ) public {
+        vm.assume(_amount > minFuzzAmount && _amount < maxFuzzAmount);
 
         // Deposit into strategy
         mintAndDepositIntoStrategy(strategy, user, _amount);
@@ -66,7 +70,6 @@ contract OperationTest is Setup {
         // Earn Interest
         skip(1 days);
 
-        // TODO: implement logic to simulate earning interest.
         uint256 toAirdrop = (_amount * _profitFactor) / MAX_BPS;
         airdrop(asset, address(strategy), toAirdrop);
 
@@ -104,7 +107,6 @@ contract OperationTest is Setup {
         // Earn Interest
         skip(1 days);
 
-        // TODO: implement logic to simulate earning interest.
         uint256 toAirdrop = (_amount * _profitFactor) / MAX_BPS;
         airdrop(asset, address(strategy), toAirdrop);
 
@@ -177,5 +179,84 @@ contract OperationTest is Setup {
         (trigger,) = strategy.tendTrigger();
         assertTrue(!trigger);
     }
+
+    function test_auction(
+        uint256 _amount
+    ) public {
+        vm.assume(_amount > minFuzzAmount && _amount < maxFuzzAmount);
+
+        vm.expectRevert("!keeper");
+        strategy.kickAuction(address(asset));
+
+        vm.startPrank(management);
+        strategy.setAuction(address(auction));
+        assertEq(address(strategy.auction()), address(auction));
+
+        auction.setReceiver(management);
+        vm.expectRevert("!receiver");
+        strategy.setAuction(address(auction));
+        auction.setReceiver(address(0));
+
+        auction.setWant(address(vault));
+        vm.expectRevert("!want");
+        strategy.setAuction(address(auction));
+        vm.stopPrank();
+
+        vm.expectRevert("!keeper");
+        strategy.kickAuction(shitcoin);
+
+        vm.startPrank(keeper);
+        vm.expectRevert("!_toAuction");
+        strategy.kickAuction(shitcoin);
+
+        airdrop(ERC20(shitcoin), address(strategy), _amount);
+        strategy.kickAuction(shitcoin);
+        assertEq(ERC20(shitcoin).balanceOf(address(strategy)), 0);
+        assertEq(ERC20(shitcoin).balanceOf(address(auction)), _amount);
+    }
+
+    // function test_operation_maxUtilization(
+    //     uint256 _amount
+    // ) public {
+    //     vm.assume(_amount > minFuzzAmount && _amount < maxFuzzAmount);
+
+    //     // Deposit into strategy
+    //     mintAndDepositIntoStrategy(strategy, user, _amount);
+
+    //     assertEq(strategy.totalAssets(), _amount, "!totalAssets");
+    //     assertEq(strategy.maxRedeem(user), _amount, "!maxRedeem");
+
+    //     // Simulate max borrow so utilization is 100%
+    //     simulateMaxBorrow();
+
+    //     assertEq(strategy.maxRedeem(user), 0, "!maxRedeem==0");
+
+    //     // Revert on redeem
+    //     vm.prank(user);
+    //     vm.expectRevert("ERC4626: redeem more than max");
+    //     strategy.redeem(_amount, user, user);
+
+    //     // Unwind borrow position
+    //     unwindSimulateMaxBorrow();
+
+    //     // Earn Interest
+    //     skip(1 days);
+
+    //     // Report profit
+    //     vm.prank(keeper);
+    //     (uint256 profit, uint256 loss) = strategy.report();
+
+    //     // Check return Values
+    //     assertGt(profit, 0, "!profit");
+    //     assertEq(loss, 0, "!loss");
+
+    //     uint256 balanceBefore = asset.balanceOf(user);
+
+    //     // Withdraw all funds
+    //     vm.prank(user);
+    //     strategy.redeem(_amount, user, user);
+
+    //     assertGe(asset.balanceOf(user), balanceBefore + _amount, "!final balance");
+    // }
 
 }

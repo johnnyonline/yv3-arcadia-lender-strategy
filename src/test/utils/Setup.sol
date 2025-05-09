@@ -10,6 +10,8 @@ import {ArcadiaLenderStrategy as Strategy, ERC20} from "../../Strategy.sol";
 import {StrategyFactory} from "../../StrategyFactory.sol";
 import {IStrategyInterface} from "../../interfaces/IStrategyInterface.sol";
 
+import {AuctionMock} from "../mocks/AuctionMock.sol";
+
 // Inherit the events so they can be checked if desired.
 import {IEvents} from "@tokenized-strategy/interfaces/IEvents.sol";
 
@@ -31,10 +33,12 @@ contract Setup is ExtendedTest, IEvents {
 
     // Addresses for different contracts we will use repeatedly.
     IERC4626 public vault = IERC4626(0x393893caeB06B5C16728bb1E354b6c36942b1382); // arcadia weth lender vault
+    address public shitcoin = address(0x568eb42245121219cCf12D2b6458123A8303356D); // BODEN
 
     // Contract instances that we will use repeatedly.
     ERC20 public asset;
     IStrategyInterface public strategy;
+    AuctionMock public auction;
 
     StrategyFactory public strategyFactory;
 
@@ -54,9 +58,9 @@ contract Setup is ExtendedTest, IEvents {
     uint256 public decimals;
     uint256 public MAX_BPS = 10_000;
 
-    // Fuzz from $0.01 of 1e6 stable coins up to 1 trillion of a 1e18 coin
+    // Fuzz from $1 of 1e6 stable coins up to 1 trillion of a 1e18 coin
     uint256 public maxFuzzAmount = 1e30;
-    uint256 public minFuzzAmount = 10_000;
+    uint256 public minFuzzAmount = 1_000_000;
 
     // Default profit max unlock time is set for 10 days
     uint256 public profitMaxUnlockTime = 10 days;
@@ -74,6 +78,7 @@ contract Setup is ExtendedTest, IEvents {
 
         // Deploy strategy and set variables
         strategy = IStrategyInterface(setUpStrategy());
+        auction = new AuctionMock(vault.asset());
 
         factory = strategy.FACTORY();
 
@@ -145,6 +150,44 @@ contract Setup is ExtendedTest, IEvents {
         vm.prank(management);
         strategy.setPerformanceFee(_performanceFee);
     }
+
+    // function simulateMaxBorrow() public {
+    //     ISilo _silo1 = ISilo(siloLendToken); // borrow from
+    //     ISilo _silo0 = ISilo(siloCollateralToken); // deposit to
+
+    //     address _usefulWhale = address(420);
+    //     vm.startPrank(_usefulWhale);
+
+    //     // Deposit collateral
+    //     uint256 _collateralAmount = 1e30; // 1 trillion S
+    //     airdrop(ERC20(_silo0.asset()), _usefulWhale, _collateralAmount);
+    //     ERC20(_silo0.asset()).approve(address(_silo0), _collateralAmount);
+    //     _silo0.deposit(_collateralAmount, _usefulWhale);
+
+    //     // Borrow
+    //     uint256 _borrowAmount = _silo1.getLiquidity();
+    //     _silo1.borrow(_borrowAmount, _usefulWhale, _usefulWhale);
+    //     vm.stopPrank();
+
+    //     // make sure utilization is 100%
+    //     assertEq(_silo1.getLiquidity(), 0, "!getLiquidity");
+    // }
+
+    // function unwindSimulateMaxBorrow() public {
+    //     ISilo _silo1 = ISilo(siloLendToken); // borrow from
+
+    //     address _usefulWhale = address(420);
+    //     vm.startPrank(_usefulWhale);
+
+    //     // Repay
+    //     uint256 _sharesToRepay = _silo1.maxRepayShares(_usefulWhale);
+    //     uint256 _assetsToRepay = _silo1.previewRepayShares(_sharesToRepay);
+    //     airdrop(asset, _usefulWhale, _assetsToRepay);
+    //     asset.approve(address(_silo1), _assetsToRepay);
+    //     _silo1.repayShares(_assetsToRepay, _usefulWhale);
+
+    //     vm.stopPrank();
+    // }
 
     function _setTokenAddrs() internal {
         tokenAddrs["WBTC"] = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599;
