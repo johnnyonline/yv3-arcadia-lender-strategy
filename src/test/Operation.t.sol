@@ -24,7 +24,7 @@ contract OperationTest is Setup {
         assertEq(strategy.valueOfVault(), 0);
         assertEq(strategy.vaultsMaxWithdraw(), 0);
         assertEq(strategy.auction(), address(0));
-        assertEq(strategy.ARCADIA_LENDING_POOL(), address(0));
+        assertEq(strategy.ARCADIA_LENDING_POOL(), lendingPool);
     }
 
     function test_operation(
