@@ -18,11 +18,19 @@ contract ArcadiaLenderStrategy is Base4626Compounder {
     IAuction public auction;
 
     // ===============================================================
+    // Constants
+    // ===============================================================
+
+    /// @notice The address of the Arcadia lending pool
+    address public immutable ARCADIA_LENDING_POOL;
+
+    // ===============================================================
     // Constructor
     // ===============================================================
 
     constructor(address _asset, address _vault, string memory _name) Base4626Compounder(_asset, _name, _vault) {
-        asset.forceApprove(IArcadiaTranche(_vault).LENDING_POOL(), type(uint256).max);
+        ARCADIA_LENDING_POOL = IArcadiaTranche(_vault).LENDING_POOL();
+        asset.forceApprove(ARCADIA_LENDING_POOL, type(uint256).max);
     }
 
     // ===============================================================

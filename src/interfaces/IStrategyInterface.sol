@@ -7,6 +7,7 @@ import {IBase4626Compounder} from "@periphery/Bases/4626Compounder/IBase4626Comp
 interface IStrategyInterface is IBase4626Compounder {
 
     function auction() external view returns (address);
+    function ARCADIA_LENDING_POOL() external view returns (address);
     function setAuction(
         address _auction
     ) external;

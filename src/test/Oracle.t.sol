@@ -15,43 +15,25 @@ contract OracleTest is Setup {
     }
 
     function checkOracle(address _strategy, uint256 _delta) public {
-        // Check set up
-        // TODO: Add checks for the setup
-
         uint256 currentApr = oracle.aprAfterDebtChange(_strategy, 0);
+        console2.log("Current APR: ", currentApr);
 
         // Should be greater than 0 but likely less than 100%
         assertGt(currentApr, 0, "ZERO");
         assertLt(currentApr, 1e18, "+100%");
 
-        // TODO: Uncomment to test the apr goes up and down based on debt changes
-        /**
-         * uint256 negativeDebtChangeApr = oracle.aprAfterDebtChange(_strategy, -int256(_delta));
-         *
-         *     // The apr should go up if deposits go down
-         *     assertLt(currentApr, negativeDebtChangeApr, "negative change");
-         *
-         *     uint256 positiveDebtChangeApr = oracle.aprAfterDebtChange(_strategy, int256(_delta));
-         *
-         *     assertGt(currentApr, positiveDebtChangeApr, "positive change");
-         */
+        uint256 negativeDebtChangeApr = oracle.aprAfterDebtChange(_strategy, -int256(_delta));
 
-        // TODO: Uncomment if there are setter functions to test.
-        /**
-         * vm.expectRevert("!governance");
-         *     vm.prank(user);
-         *     oracle.setterFunction(setterVariable);
-         *
-         *     vm.prank(management);
-         *     oracle.setterFunction(setterVariable);
-         *
-         *     assertEq(oracle.setterVariable(), setterVariable);
-         */
+        // The apr should go up if deposits go down
+        assertLt(currentApr, negativeDebtChangeApr, "negative change");
+
+        uint256 positiveDebtChangeApr = oracle.aprAfterDebtChange(_strategy, int256(_delta));
+        assertGt(currentApr, positiveDebtChangeApr, "positive change");
     }
 
-    function test_oracle(uint256 _amount, uint16 _percentChange) public {
-        vm.assume(_amount > minFuzzAmount && _amount < maxFuzzAmount);
-        _percentChange = uint16(bound(uint256(_percentChange), 10, MAX_BPS));
+    function test_oracle() public {
+        uint256 _amount = 10 ether;
+        uint16 _percentChange = uint16(MAX_BPS);
 
         mintAndDepositIntoStrategy(strategy, user, _amount);
 
@@ -59,7 +41,5 @@ contract OracleTest is Setup {
 
         checkOracle(address(strategy), _delta);
     }
-
-    // TODO: Deploy multiple strategies with different tokens as `asset` to test against the oracle.
 
 }

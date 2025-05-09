@@ -33,6 +33,7 @@ contract Setup is ExtendedTest, IEvents {
 
     // Addresses for different contracts we will use repeatedly.
     IERC4626 public vault = IERC4626(0x393893caeB06B5C16728bb1E354b6c36942b1382); // arcadia weth lender vault
+    address public lendingPool = address(0x803ea69c7e87D1d6C86adeB40CB636cC0E6B98E2); // arcadia weth lending pool
     address public shitcoin = address(0x568eb42245121219cCf12D2b6458123A8303356D); // BODEN
 
     // Contract instances that we will use repeatedly.
