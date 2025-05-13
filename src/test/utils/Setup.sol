@@ -152,43 +152,15 @@ contract Setup is ExtendedTest, IEvents {
         strategy.setPerformanceFee(_performanceFee);
     }
 
-    // function simulateMaxBorrow() public {
-    //     ISilo _silo1 = ISilo(siloLendToken); // borrow from
-    //     ISilo _silo0 = ISilo(siloCollateralToken); // deposit to
+    function simulateMaxBorrow() public {
+        vm.mockCall(address(vault), abi.encodeWithSelector(IERC4626.maxRedeem.selector), abi.encode(0));
+        assertEq(vault.maxRedeem(address(strategy)), 0, "!mockCall");
+    }
 
-    //     address _usefulWhale = address(420);
-    //     vm.startPrank(_usefulWhale);
-
-    //     // Deposit collateral
-    //     uint256 _collateralAmount = 1e30; // 1 trillion S
-    //     airdrop(ERC20(_silo0.asset()), _usefulWhale, _collateralAmount);
-    //     ERC20(_silo0.asset()).approve(address(_silo0), _collateralAmount);
-    //     _silo0.deposit(_collateralAmount, _usefulWhale);
-
-    //     // Borrow
-    //     uint256 _borrowAmount = _silo1.getLiquidity();
-    //     _silo1.borrow(_borrowAmount, _usefulWhale, _usefulWhale);
-    //     vm.stopPrank();
-
-    //     // make sure utilization is 100%
-    //     assertEq(_silo1.getLiquidity(), 0, "!getLiquidity");
-    // }
-
-    // function unwindSimulateMaxBorrow() public {
-    //     ISilo _silo1 = ISilo(siloLendToken); // borrow from
-
-    //     address _usefulWhale = address(420);
-    //     vm.startPrank(_usefulWhale);
-
-    //     // Repay
-    //     uint256 _sharesToRepay = _silo1.maxRepayShares(_usefulWhale);
-    //     uint256 _assetsToRepay = _silo1.previewRepayShares(_sharesToRepay);
-    //     airdrop(asset, _usefulWhale, _assetsToRepay);
-    //     asset.approve(address(_silo1), _assetsToRepay);
-    //     _silo1.repayShares(_assetsToRepay, _usefulWhale);
-
-    //     vm.stopPrank();
-    // }
+    function unwindSimulateMaxBorrow() public {
+        vm.clearMockedCalls();
+        assertTrue(vault.maxRedeem(address(strategy)) > 0, "!clearMockedCalls");
+    }
 
     function _setTokenAddrs() internal {
         tokenAddrs["WBTC"] = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599;

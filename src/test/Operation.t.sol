@@ -216,48 +216,47 @@ contract OperationTest is Setup {
         assertEq(ERC20(shitcoin).balanceOf(address(auction)), _amount);
     }
 
-    // function test_operation_maxUtilization(
-    //     uint256 _amount
-    // ) public {
-    //     vm.assume(_amount > minFuzzAmount && _amount < maxFuzzAmount);
+    function test_operation_maxUtilization(
+        uint256 _amount
+    ) public {
+        vm.assume(_amount > minFuzzAmount && _amount < maxFuzzAmount);
 
-    //     // Deposit into strategy
-    //     mintAndDepositIntoStrategy(strategy, user, _amount);
+        // Deposit into strategy
+        mintAndDepositIntoStrategy(strategy, user, _amount);
 
-    //     assertEq(strategy.totalAssets(), _amount, "!totalAssets");
-    //     assertEq(strategy.maxRedeem(user), _amount, "!maxRedeem");
+        assertEq(strategy.totalAssets(), _amount, "!totalAssets");
 
-    //     // Simulate max borrow so utilization is 100%
-    //     simulateMaxBorrow();
+        // Simulate max borrow so utilization is 100%
+        simulateMaxBorrow();
 
-    //     assertEq(strategy.maxRedeem(user), 0, "!maxRedeem==0");
+        assertEq(strategy.maxRedeem(user), 0, "!maxRedeem==0");
 
-    //     // Revert on redeem
-    //     vm.prank(user);
-    //     vm.expectRevert("ERC4626: redeem more than max");
-    //     strategy.redeem(_amount, user, user);
+        // Revert on redeem
+        vm.prank(user);
+        vm.expectRevert("ERC4626: redeem more than max");
+        strategy.redeem(_amount, user, user);
 
-    //     // Unwind borrow position
-    //     unwindSimulateMaxBorrow();
+        // Unwind borrow position
+        unwindSimulateMaxBorrow();
 
-    //     // Earn Interest
-    //     skip(1 days);
+        // Earn Interest
+        skip(1 days);
 
-    //     // Report profit
-    //     vm.prank(keeper);
-    //     (uint256 profit, uint256 loss) = strategy.report();
+        // Report profit
+        vm.prank(keeper);
+        (uint256 profit, uint256 loss) = strategy.report();
 
-    //     // Check return Values
-    //     assertGt(profit, 0, "!profit");
-    //     assertEq(loss, 0, "!loss");
+        // Check return Values
+        assertGt(profit, 0, "!profit");
+        assertEq(loss, 0, "!loss");
 
-    //     uint256 balanceBefore = asset.balanceOf(user);
+        uint256 balanceBefore = asset.balanceOf(user);
 
-    //     // Withdraw all funds
-    //     vm.prank(user);
-    //     strategy.redeem(_amount, user, user);
+        // Withdraw all funds
+        vm.prank(user);
+        strategy.redeem(_amount, user, user);
 
-    //     assertGe(asset.balanceOf(user), balanceBefore + _amount, "!final balance");
-    // }
+        assertGe(asset.balanceOf(user), balanceBefore + _amount, "!final balance");
+    }
 
 }

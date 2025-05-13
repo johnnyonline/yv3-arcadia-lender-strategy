@@ -28,6 +28,9 @@ contract ArcadiaLenderStrategy is Base4626Compounder {
     // Constructor
     // ===============================================================
 
+    /// @param _asset Underlying asset to use for this strategy
+    /// @param _vault ERC4626 vault token to use. Arcadia Finance's share token, one recieves on borrowable deposits
+    /// @param _name Name to use for this strategy. Ideally something human readable for a UI to use
     constructor(address _asset, address _vault, string memory _name) Base4626Compounder(_asset, _name, _vault) {
         ARCADIA_LENDING_POOL = IArcadiaTranche(_vault).LENDING_POOL();
         asset.forceApprove(ARCADIA_LENDING_POOL, type(uint256).max);
