@@ -33,7 +33,6 @@ contract ArcadiaLenderStrategy is Base4626Compounder {
     /// @param _name Name to use for this strategy. Ideally something human readable for a UI to use
     constructor(address _asset, address _vault, string memory _name) Base4626Compounder(_asset, _name, _vault) {
         ARCADIA_LENDING_POOL = IArcadiaTranche(_vault).LENDING_POOL();
-        asset.forceApprove(ARCADIA_LENDING_POOL, type(uint256).max);
     }
 
     // ===============================================================
@@ -68,6 +67,17 @@ contract ArcadiaLenderStrategy is Base4626Compounder {
         IAuction _auction = auction;
         _token.safeTransfer(address(_auction), _toAuction);
         return _auction.kick(_token);
+    }
+
+    // ===============================================================
+    // Mutated functions
+    // ===============================================================
+
+    function _deployFunds(
+        uint256 _amount
+    ) internal override {
+        asset.forceApprove(ARCADIA_LENDING_POOL, _amount);
+        vault.deposit(_amount, address(this));
     }
 
 }
